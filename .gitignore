@@ -1,0 +1,9 @@
+# Folders
+node_modules
+.vercel
+.idea
+.vscode
+
+
+# Files
+.env
