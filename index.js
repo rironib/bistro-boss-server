@@ -36,6 +36,15 @@ async function run() {
     });
 
     // Cart Collection
+    //// GET: Get cart data
+    app.get("/carts", async (req, res) => {
+      const email = req.query.email.toLowerCase();
+      const query = { email: email };
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //// POST: Add data to cart
     app.post("/carts", async (req, res) => {
       const cartItem = req.body;
       const result = await cartCollection.insertOne(cartItem);
