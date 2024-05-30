@@ -25,17 +25,58 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    const userCollection = client.db("BistroDB").collection("users");
     const menuCollection = client.db("BistroDB").collection("menu");
     const cartCollection = client.db("BistroDB").collection("carts");
     const reviewCollection = client.db("BistroDB").collection("reviews");
 
-    // Menu Collection
+    // *** User Collection ***
+    //// POST: Add new user
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "User already exists", insertedId: null });
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(user);
+    });
+
+    //// DELETE: Remove user
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //// PATCH: Update user role
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // GET: Get all users data
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
+    // *** Menu Collection ***
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
 
-    // Cart Collection
+    // *** Cart Collection ***
     //// GET: Get cart data
     app.get("/carts", async (req, res) => {
       const email = req.query.email.toLowerCase();
@@ -59,7 +100,7 @@ async function run() {
       res.send(result);
     });
 
-    // Review Collection
+    // *** Review Collection ***
     app.get("/reviews", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
