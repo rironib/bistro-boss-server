@@ -40,6 +40,21 @@ async function run() {
       res.send({ token });
     });
 
+    // *** Middlewares ***
+    const verifyToken = (req, res, next) => {
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "Forbidden Access" });
+      }
+      const token = req.headers.authorization.split(" ")[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: "Forbidden Access" });
+        }
+        req.decoded = decoded;
+        next();
+      });
+    };
+
     // *** User Collection ***
     //// POST: Add new user
     app.post("/users", async (req, res) => {
@@ -75,7 +90,7 @@ async function run() {
     });
 
     // GET: Get all users data
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
