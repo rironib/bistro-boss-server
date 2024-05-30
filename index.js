@@ -129,6 +129,14 @@ async function run() {
     });
 
     // *** Menu Collection ***
+    //// POST: Add new menu item
+    app.post("/menu", verifyToken, verifyAdmin, async (req, res) => {
+      const item = req.body;
+      const result = await menuCollection.insertOne(item);
+      res.send(result);
+    });
+
+    //// GET: Get menu data
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
