@@ -150,6 +150,23 @@ async function run() {
       res.send(result);
     });
 
+    //// PATCH: Update single menu data
+    app.patch("/menu/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const item = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          name: item.name,
+          category: item.category,
+          price: item.price,
+          recipe: item.recipe,
+        },
+      };
+      const result = await menuCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     // *** Cart Collection ***
     //// GET: Get cart data
     app.get("/carts", async (req, res) => {
