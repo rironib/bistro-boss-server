@@ -136,9 +136,17 @@ async function run() {
       res.send(result);
     });
 
-    //// GET: Get menu data
+    //// GET: Get all menu data
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
+      res.send(result);
+    });
+
+    //// GET: Get single menu data
+    app.get("/menu/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await menuCollection.findOne(query);
       res.send(result);
     });
 
