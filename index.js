@@ -274,6 +274,50 @@ async function run() {
       res.send({ revenue, users, items, orders });
     });
 
+    //// Dashboard Orders Stats
+    app.get("/api/admin/order-stats", async (req, res) => {
+      const result = await paymentCollection
+        .aggregate([
+          {
+            $unwind: "$menuItemIds",
+          },
+          {
+            $addFields: {
+              menuItemObjectId: { $toObjectId: "$menuItemIds" },
+            },
+          },
+          {
+            $lookup: {
+              from: "menu",
+              localField: "menuItemObjectId",
+              foreignField: "_id",
+              as: "menuItems",
+            },
+          },
+          {
+            $unwind: "$menuItems",
+          },
+          {
+            $group: {
+              _id: "$menuItems.category",
+              quantity: { $sum: 1 },
+              revenue: { $sum: "$menuItems.price" },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              category: "$_id",
+              quantity: "$quantity",
+              revenue: "$revenue",
+            },
+          },
+        ])
+        .toArray();
+
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     // console.log("You successfully connected to MongoDB!");
