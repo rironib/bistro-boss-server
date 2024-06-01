@@ -26,12 +26,12 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-
-    const userCollection = client.db("BistroDB").collection("users");
-    const menuCollection = client.db("BistroDB").collection("menu");
-    const cartCollection = client.db("BistroDB").collection("carts");
-    const reviewCollection = client.db("BistroDB").collection("reviews");
-    const paymentCollection = client.db("BistroDB").collection("payments");
+    const db = client.db("BistroDB");
+    const userCollection = db.collection("users");
+    const menuCollection = db.collection("menu");
+    const cartCollection = db.collection("carts");
+    const reviewCollection = db.collection("reviews");
+    const paymentCollection = db.collection("payments");
 
     // *** JWT Related API ***
     app.post("/jwt", async (req, res) => {
@@ -249,13 +249,34 @@ async function run() {
       res.send(result);
     });
 
+    // Admin Panel APIs
+    //// Dashboard Analytics
+    app.get("/api/admin/stats", verifyToken, verifyAdmin, async (req, res) => {
+      const users = await userCollection.estimatedDocumentCount();
+      const items = await menuCollection.estimatedDocumentCount();
+      const orders = await paymentCollection.estimatedDocumentCount();
+
+      const totalPayments = await paymentCollection
+        .aggregate([
+          {
+            $group: {
+              _id: null,
+              totalRevenue: {
+                $sum: "$price",
+              },
+            },
+          },
+        ])
+        .toArray();
+      const revenue =
+        totalPayments.length > 0 ? totalPayments[0].totalRevenue : 0;
+
+      res.send({ revenue, users, items, orders });
+    });
+
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
-  } catch (err) {
-    console.error("Failed to connect to MongoDB:", err);
+    // console.log("You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
